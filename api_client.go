@@ -341,7 +341,7 @@ func buildRequest(ctx context.Context, ac *apiClient, path string, body map[stri
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	if ac.clientConfig.APIKey != "" {
+	if ac.clientConfig.APIKey != "" && req.Header.Get("Authorization") == "" {
 		req.Header.Set("x-goog-api-key", ac.clientConfig.APIKey)
 	}
 

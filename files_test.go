@@ -846,6 +846,9 @@ func TestFilesRegisterFiles(t *testing.T) {
 		if authHeader != "Bearer test-token" {
 			t.Errorf("Expected Authorization header 'Bearer test-token', got %s", authHeader)
 		}
+		if apiKey := r.Header.Get("x-goog-api-key"); apiKey != "" {
+			t.Errorf("Expected no API key with bearer authentication, got %s", apiKey)
+		}
 
 		userProject := r.Header.Get("X-Goog-User-Project")
 		if userProject != "test-quota-project" {
