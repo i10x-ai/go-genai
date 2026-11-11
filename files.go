@@ -17,7 +17,6 @@
 package genai
 
 import (
-	"cloud.google.com/go/auth"
 	"context"
 	"fmt"
 	"io"
@@ -700,40 +699,13 @@ func (m Files) UploadFromPath(ctx context.Context, path string, config *UploadFi
 }
 
 // RegisterFiles registers Google Cloud Storage files for use with the API.
+// The API key configured on the client is used for authentication.
 //
 // This method is only supported in the Gemini Developer client.
-func (m Files) RegisterFiles(ctx context.Context, uris []string, creds *auth.Credentials, config *RegisterFilesConfig) (*RegisterFilesResponse, error) {
+func (m Files) RegisterFiles(ctx context.Context, uris []string, config *RegisterFilesConfig) (*RegisterFilesResponse, error) {
 	if m.apiClient.clientConfig.Backend == BackendVertexAI {
 		return nil, fmt.Errorf("method RegisterFiles is only supported in Gemini Developer API mode, not in Gemini Enterprise Agent Platform mode. You can choose to use Gemini Developer client by setting ClientConfig.Backend to BackendGeminiAPI.")
 	}
 
-	if creds == nil {
-		return nil, fmt.Errorf("credentials are required for RegisterFiles")
-	}
-
-	token, err := creds.Token(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get token from credentials: %w", err)
-	}
-
-	var localConfig RegisterFilesConfig
-	if config != nil {
-		localConfig = *config
-	}
-
-	httpOptions := mergeHTTPOptions(m.apiClient.clientConfig, localConfig.HTTPOptions)
-
-	if httpOptions.Headers == nil {
-		httpOptions.Headers = http.Header{}
-	}
-	httpOptions.Headers.Set("Authorization", "Bearer "+token.Value)
-
-	quotaProjectID, _ := creds.QuotaProjectID(ctx)
-	if quotaProjectID != "" {
-		httpOptions.Headers.Set("X-Goog-User-Project", quotaProjectID)
-	}
-
-	localConfig.HTTPOptions = httpOptions
-
-	return m.registerFiles(ctx, uris, &localConfig)
+	return m.registerFiles(ctx, uris, config)
 }

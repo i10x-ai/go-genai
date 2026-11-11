@@ -842,14 +842,12 @@ func TestFilesRegisterFiles(t *testing.T) {
 			t.Errorf("Expected path /test-version/files:register, got %s", r.URL.Path)
 		}
 
-		authHeader := r.Header.Get("Authorization")
-		if authHeader != "Bearer test-token" {
-			t.Errorf("Expected Authorization header 'Bearer test-token', got %s", authHeader)
+		if authHeader := r.Header.Get("Authorization"); authHeader != "" {
+			t.Errorf("Expected no Authorization header, got %s", authHeader)
 		}
 
-		userProject := r.Header.Get("X-Goog-User-Project")
-		if userProject != "test-quota-project" {
-			t.Errorf("Expected X-Goog-User-Project header 'test-quota-project', got %s", userProject)
+		if apiKey := r.Header.Get("x-goog-api-key"); apiKey != "test-api-key" {
+			t.Errorf("Expected API key from client, got %s", apiKey)
 		}
 
 		var reqBody map[string]any
@@ -878,9 +876,7 @@ func TestFilesRegisterFiles(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	creds := newStaticCredentials(&auth.Token{Value: "test-token"}, "test-quota-project")
-
-	resp, err := client.Files.RegisterFiles(ctx, []string{"gs://test-bucket/test-file"}, creds, nil)
+	resp, err := client.Files.RegisterFiles(ctx, []string{"gs://test-bucket/test-file"}, nil)
 	if err != nil {
 		t.Fatalf("RegisterFiles failed: %v", err)
 	}
@@ -906,33 +902,11 @@ func TestFilesRegisterFilesVertex(t *testing.T) {
 		t.Fatalf("Failed to create client: %v", err)
 	}
 
-	creds := &auth.Credentials{}
-	_, err = client.Files.RegisterFiles(ctx, []string{"gs://bucket/file"}, creds, nil)
+	_, err = client.Files.RegisterFiles(ctx, []string{"gs://bucket/file"}, nil)
 	if err == nil {
 		t.Errorf("RegisterFiles should fail on Vertex AI")
 	}
 	if !strings.Contains(err.Error(), "is only supported in Gemini Developer API mode") {
 		t.Errorf("Unexpected error: %v", err)
 	}
-}
-
-func newStaticCredentials(token *auth.Token, quotaProjectID string) *auth.Credentials {
-	return auth.NewCredentials(&auth.CredentialsOptions{
-		TokenProvider:          &staticTokenProvider{token: token},
-		QuotaProjectIDProvider: staticPropertyProvider(quotaProjectID),
-	})
-}
-
-type staticTokenProvider struct {
-	token *auth.Token
-}
-
-func (s *staticTokenProvider) Token(ctx context.Context) (*auth.Token, error) {
-	return s.token, nil
-}
-
-type staticPropertyProvider string
-
-func (s staticPropertyProvider) GetProperty(ctx context.Context) (string, error) {
-	return string(s), nil
 }
