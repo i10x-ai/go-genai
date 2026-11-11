@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"log"
 
-	"cloud.google.com/go/auth/credentials"
 	"google.golang.org/genai"
 )
 
@@ -36,16 +35,8 @@ func run(ctx context.Context) {
 		log.Fatal("RegisterFiles is only supported in the Gemini Developer client.")
 	}
 
-	// Detect default credentials to use for registering files.
-	// This is required because the Gemini Developer client normally uses API keys,
-	// but registering files from Google Cloud Storage requires OAuth credentials.
-	creds, err := credentials.DetectDefault(&credentials.DetectOptions{})
-	if err != nil {
-		log.Fatal("Failed to detect default credentials: ", err)
-	}
-
 	uris := []string{"gs://tensorflow_docs/image.jpg"}
-	resp, err := client.Files.RegisterFiles(ctx, uris, creds, nil)
+	resp, err := client.Files.RegisterFiles(ctx, uris, nil)
 	if err != nil {
 		log.Fatal("Failed to register files: ", err)
 	}
